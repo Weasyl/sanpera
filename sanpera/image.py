@@ -655,10 +655,9 @@ class Image(object):
 
     def coalesced(self):
         """Returns an image with each frame composited over previous frames."""
-        with magick_try() as exc:
-            new_image = ffi.gc(
-                lib.CoalesceImages(self._stack, exc.ptr),
-                lib.DestroyImageList)
+        with self._link_frames(self._frames) as image_list:
+            with magick_try() as exc:
+                new_image = lib.CoalesceImages(image_list, exc.ptr)
 
         return type(self)(new_image)
 
