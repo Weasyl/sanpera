@@ -4,6 +4,8 @@ examples.
 See: http://www.imagemagick.org/Usage/canvas/
 """
 
+import pytest
+
 from sanpera.color import RGBColor
 from sanpera.geometry import Size
 from sanpera.image import Image, builtins
@@ -49,26 +51,32 @@ def test_color_colorize(ctx):
     ctx.compare(img, 'color_colorize.miff')
 
 @convert('convert test.png -alpha Opaque +level-colors Chocolate color_levelc.miff')
+@pytest.mark.xfail
 def test_color_levelc(ctx):
     raise NotImplementedError
 
 @convert('convert test.png -alpha Off -sparse-color Voronoi "0,0 Peru" color_sparse.miff')
+@pytest.mark.xfail
 def test_color_sparse(ctx):
     raise NotImplementedError
 
 @convert('convert test.png -fill Tan -draw "color 0,0 reset" color_reset.miff')
+@pytest.mark.xfail
 def test_color_reset(ctx):
     raise NotImplementedError
 
 @convert('convert test.png -background Wheat -compose Dst -flatten color_flatten.miff')
+@pytest.mark.xfail
 def test_color_flatten(ctx):
     raise NotImplementedError
 
 @convert('convert test.png -background LemonChiffon -compose Dst -extent 100x100   color_extent.miff')
+@pytest.mark.xfail
 def test_color_extent(ctx):
     raise NotImplementedError
 
 @convert('convert test.png -bordercolor Khaki -compose Dst -border 0   color_border.miff')
+@pytest.mark.xfail
 def test_color_border(ctx):
     raise NotImplementedError
 
@@ -99,6 +107,7 @@ def test_color_fx_math(ctx):
     ctx.compare(img, 'color_fx_math.miff')
 
 @convert('convert test.png -matte -fill #FF000040 -draw "color 0,0 reset" color_semitrans.miff')
+@pytest.mark.xfail
 def test_color_semitrans(ctx):
     raise NotImplementedError
 
