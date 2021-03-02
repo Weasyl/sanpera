@@ -543,7 +543,6 @@ class Image(object):
         # TODO allow picking a filter
         # TODO allow messing with blur?
 
-        p = self._stack
         new_stack_ptr = ffi.new("Image **", ffi.NULL)
 
         if filter == 'box':
@@ -556,74 +555,75 @@ class Image(object):
         ratio_width = target_width / (self._stack.page.width or self._stack.columns)
         ratio_height = target_height / (self._stack.page.height or self._stack.rows)
 
-        while p:
-            # Alrighty, so.  ResizeImage takes the given size as the new size
-            # of the FRAME, rather than the CANVAS, which is almost certainly
-            # not what anyone expects.  So do the math to fix this manually,
-            # converting from canvas size to frame size.
-            frame_width = int(p.columns * ratio_width + 0.5)
-            frame_height = int(p.rows * ratio_height + 0.5)
+        with self._link_frames(self._frames) as p:
+            while p:
+                # Alrighty, so.  ResizeImage takes the given size as the new size
+                # of the FRAME, rather than the CANVAS, which is almost certainly
+                # not what anyone expects.  So do the math to fix this manually,
+                # converting from canvas size to frame size.
+                frame_width = int(p.columns * ratio_width + 0.5)
+                frame_height = int(p.rows * ratio_height + 0.5)
 
-            # Imagemagick seems to consider sRGB (nonlinear) to be the default colorspace
-            # for images without colorspace information. In doing so, it might mangle colors
-            # during some operations which expect a linear colorspace. It also seems to prefer
-            # sRGB as output, rather than using the input colorspace.
-            # See also:
-            # http://www.imagemagick.org/script/color-management.php
+                # Imagemagick seems to consider sRGB (nonlinear) to be the default colorspace
+                # for images without colorspace information. In doing so, it might mangle colors
+                # during some operations which expect a linear colorspace. It also seems to prefer
+                # sRGB as output, rather than using the input colorspace.
+                # See also:
+                # http://www.imagemagick.org/script/color-management.php
 
-            inputImage = p
-            with magick_try() as exc:
-                if c_filter == lib.BoxFilter:
-                    # Use the faster ScaleImage in this special case
-                    new_frame = lib.ScaleImage(
-                        inputImage, frame_width, frame_height, exc.ptr)
-                else:
-                    new_frame = lib.ResizeImage(
-                        inputImage, frame_width, frame_height,
-                        c_filter, 1.0, exc.ptr)
+                inputImage = p
+                with magick_try() as exc:
+                    if c_filter == lib.BoxFilter:
+                        # Use the faster ScaleImage in this special case
+                        new_frame = lib.ScaleImage(
+                            inputImage, frame_width, frame_height, exc.ptr)
+                    else:
+                        new_frame = lib.ResizeImage(
+                            inputImage, frame_width, frame_height,
+                            c_filter, 1.0, exc.ptr)
 
-                if new_frame.colorspace != p.colorspace and p.colorspace != lib.UndefinedColorspace:
-                    lib.TransformImageColorspace(new_frame, p.colorspace)
+                    if new_frame.colorspace != p.colorspace and p.colorspace != lib.UndefinedColorspace:
+                        lib.TransformImageColorspace(new_frame, p.colorspace)
 
-            if inputImage != p:
-                lib.DestroyImage(inputImage)
+                if inputImage != p:
+                    lib.DestroyImage(inputImage)
 
-            # TODO how do i do this correctly etc?  will it ever be non-null??
-            #except Exception:
-            #    lib.DestroyImage(new_frame)
+                # TODO how do i do this correctly etc?  will it ever be non-null??
+                #except Exception:
+                #    lib.DestroyImage(new_frame)
 
-            # ImageMagick uses new_size/old_size to compute the resized frame's
-            # position.  But new_size has already been rounded, so for small
-            # frames in a large image, the double rounding error can place the
-            # new frame a noticable distance from where one might expect.  Fix
-            # the canvas manually, too.
-            new_frame.page.width = target_width
-            new_frame.page.height = target_height
-            new_frame.page.x = int(p.page.x * ratio_width + 0.5)
-            new_frame.page.y = int(p.page.y * ratio_height + 0.5)
+                # ImageMagick uses new_size/old_size to compute the resized frame's
+                # position.  But new_size has already been rounded, so for small
+                # frames in a large image, the double rounding error can place the
+                # new frame a noticable distance from where one might expect.  Fix
+                # the canvas manually, too.
+                new_frame.page.width = target_width
+                new_frame.page.height = target_height
+                new_frame.page.x = int(p.page.x * ratio_width + 0.5)
+                new_frame.page.y = int(p.page.y * ratio_height + 0.5)
 
-            lib.AppendImageToList(new_stack_ptr, new_frame)
-            p = lib.GetNextImageInList(p)
+                lib.AppendImageToList(new_stack_ptr, new_frame)
+                p = lib.GetNextImageInList(p)
 
         return type(self)(new_stack_ptr[0])
 
     def cropped(self, rect, preserve_canvas=False):
         rectinfo = rect.to_rect_info()
 
-        p = self._stack
         new_stack_ptr = ffi.new("Image **", ffi.NULL)
 
-        while p:
-            with magick_try() as exc:
-                new_frame = lib.CropImage(p, rectinfo, exc.ptr)
+        with self._link_frames(self._frames) as p:
+            while p:
+                with magick_try() as exc:
+                    new_frame = lib.CropImage(p, rectinfo, exc.ptr)
 
-                # Only GC the first frame in the stack, since the others will be
-                # in the same list and thus nuked automatically
-                if new_stack_ptr == ffi.NULL:
-                    new_frame = ffi.gc(new_frame, lib.DestroyImageList)
+                    # Only GC the first frame in the stack, since the others will be
+                    # in the same list and thus nuked automatically
+                    if new_stack_ptr == ffi.NULL:
+                        new_frame = ffi.gc(new_frame, lib.DestroyImageList)
 
-            lib.AppendImageToList(new_stack_ptr, new_frame)
-            p = lib.GetNextImageInList(p)
+                lib.AppendImageToList(new_stack_ptr, new_frame)
+                p = lib.GetNextImageInList(p)
 
         new = type(self)(new_stack_ptr[0])
 
