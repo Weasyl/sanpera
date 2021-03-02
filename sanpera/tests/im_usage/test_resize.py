@@ -14,7 +14,7 @@ from sanpera.tests.im_usage.common import convert
 
 ### Resizing Images
 
-@convert('convert dragon.gif -resize 64x64 resize_dragon.miff')
+@convert('convert dragon.gif -filter Lanczos -resize 64x64 resize_dragon.miff')
 def test_resize_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size.fit_inside((64, 64)))
@@ -27,7 +27,7 @@ def test_resize_terminal(ctx):
     ctx.compare(img, 'resize_terminal.miff')
 
 
-@convert('convert dragon.gif -resize 64x64! exact_dragon.miff')
+@convert('convert dragon.gif -filter Lanczos -resize 64x64! exact_dragon.miff')
 def test_exact_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized((64, 64))
@@ -40,7 +40,7 @@ def test_exact_terminal(ctx):
     ctx.compare(img, 'exact_terminal.miff')
 
 
-@convert('convert dragon.gif -resize 64x64> shrink_dragon.miff')
+@convert('convert dragon.gif -filter Lanczos -resize 64x64> shrink_dragon.miff')
 def test_shrink_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size.fit_inside((64, 64), upscale=False))
@@ -67,7 +67,7 @@ def test_embiggen_terminal(ctx):
     ctx.compare(img, 'embiggen_terminal.miff')
 
 
-@convert('convert dragon.gif -resize 64x64^ fill_dragon.miff')
+@convert('convert dragon.gif -filter Lanczos -resize 64x64^ fill_dragon.miff')
 def test_fill_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size.fit_around((64, 64)))
@@ -97,7 +97,7 @@ def test_fill_crop_terminal(ctx):
     ctx.compare(img, 'fill_crop_terminal.miff')
 
 
-@convert('convert dragon.gif -resize 50% half_dragon.miff')
+@convert('convert dragon.gif -filter Lanczos -resize 50% half_dragon.miff')
 def test_half_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size * 0.5)
@@ -117,8 +117,14 @@ skipif_bad_area = pytest.mark.skipif(
     (6, 7, 3) < VERSION < (6, 8, 7),
     reason="Buggy @ calculation")
 
+@convert('convert dragon.gif -filter Lanczos -resize 58x70! pixel_dragon_fixed.miff')
+def test_pixel_dragon_fixed(ctx):
+    img = get_image('dragon.gif')
+    img = img.resized(img.size.fit_area(4096))
+    ctx.compare(img, 'pixel_dragon_fixed.miff')
+
 @convert('convert dragon.gif -resize 4096@ pixel_dragon.miff')
-@skipif_bad_area
+@pytest.mark.xfail(reason="Different @ calculation")
 def test_pixel_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size.fit_area(4096))
@@ -134,7 +140,7 @@ def test_pixel_terminal(ctx):
 
 # And these guys have no direct equivalent, because if you want to resize an
 # image at read time, you can just do so.
-@convert('convert dragon.gif[64x64] read_dragon.miff')
+@convert('convert -filter Lanczos dragon.gif[64x64] read_dragon.miff')
 def test_read_dragon(ctx):
     img = get_image('dragon.gif')
     img = img.resized(img.size.fit_inside((64, 64)))
