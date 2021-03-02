@@ -5,14 +5,19 @@ is a little helper object.  This file contains the py.test hook for creating
 that helper object.
 """
 
-import operator
+import pytest
 
 from sanpera.tests.im_usage.common import UsageContext
 
-def pytest_funcarg__ctx(request):
-    # Create a context object.  This caching ensures that the same object is
-    # used for every test in a module, so that they all share one output
-    # directory -- some tests use the results of previous tests.
-    ctx = request.cached_setup(UsageContext, operator.methodcaller('destroy'), scope='module')
-    ctx.do_convert(request.function)
-    return ctx
+
+@pytest.fixture(scope="module")
+def module_ctx(request):
+    ctx = UsageContext()
+    yield ctx
+    ctx.destroy()
+
+
+@pytest.fixture
+def ctx(request, module_ctx):
+    module_ctx.do_convert(request.function)
+    return module_ctx
