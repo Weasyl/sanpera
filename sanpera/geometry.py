@@ -75,9 +75,11 @@ class Vector(namedtuple('_Vector', ['x', 'y'])):
 
         return NotImplemented
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Every `Vector` is truthy, except the zero vector."""
-        return self.x or self.y
+        return self.x != 0 or self.y != 0
+
+    __nonzero__ = __bool__
 
     def __add__(self, other):
         cls = type(self)
@@ -148,9 +150,11 @@ class Size(Vector):
             width=self.x,
             height=self.y)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Sizes are falsey if _either_ dimension is zero."""
-        return self.x and self.y
+        return self.x != 0 and self.y != 0
+
+    __nonzero__ = __bool__
 
     def __neg__(self):
         return NotImplemented
