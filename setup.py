@@ -12,7 +12,7 @@ if sys.version_info < (3, 4):
 
 setup(
     name='sanpera',
-    version='0.2rc0+weasyl.1',
+    version='0.2rc0+weasyl.2',
     description='Image manipulation library, powered by ImageMagick',
     author='Eevee',
     author_email='eevee.sanpera@veekun.com',
