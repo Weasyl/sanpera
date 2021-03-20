@@ -704,6 +704,8 @@ Image *SampleImage(const Image *, const size_t, const size_t, ExceptionInfo *);
 Image *ScaleImage(const Image *, const size_t, const size_t, ExceptionInfo *);
 Image *ThumbnailImage(const Image *, const size_t, const size_t, ExceptionInfo *);
 Image *CoalesceImages(const Image *, ExceptionInfo *);
+Image *OptimizeImageLayers(const Image *, ExceptionInfo *);
+void OptimizeImageTransparency(const Image *, ExceptionInfo *);
 
 
 // -----------------------------------------------------------------------------
