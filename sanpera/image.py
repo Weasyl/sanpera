@@ -667,8 +667,10 @@ class Image(object):
         Each frame will be compared with previous frames to shrink each frame
         as much as possible while preserving the results of the animation.
         """
-        with magick_try() as exc:
-            new_image = lib.OptimizeImageLayers(self._stack, exc.ptr)
+        with self._link_frames(self._frames) as image_list:
+            with magick_try() as exc:
+                new_image = lib.OptimizeImageLayers(image_list, exc.ptr)
+
         with magick_try() as exc:
             lib.OptimizeImageTransparency(new_image, exc.ptr)
 
