@@ -1,14 +1,5 @@
-import os
-import sys
-
 from setuptools import setup
-from setuptools.dist import Distribution
 
-
-# Depend on backported libraries only if they don't already exist in the stdlib
-BACKPORTS = []
-if sys.version_info < (3, 4):
-    BACKPORTS.append('enum34')
 
 setup(
     name='sanpera',
@@ -21,14 +12,15 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: ISC License (ISCL)',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Topic :: Multimedia :: Graphics',
         'Topic :: Multimedia :: Graphics :: Graphics Conversion',
         'Topic :: Software Development :: Libraries',
     ],
 
     packages=['sanpera'],
-    install_requires=BACKPORTS + [
+    python_requires='>=3.4',
+    install_requires=[
         'cffi>=1.0.0',
     ],
 
